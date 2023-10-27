@@ -1,11 +1,14 @@
+import { Either, left, right } from '../core/either'
 import { PhotosRepository } from '../repositories/photos-repository'
+import { NotAllowedError } from './errors/not-allowed-error'
+import { ResourceNotFoundError } from './errors/resource-not-found-error'
 
 interface DeletePhotoUseCaseRequest {
   photoId: string
   authorId: string
 }
 
-interface DeletePhotoUseCaseResponse {}
+type DeletePhotoUseCaseResponse = Either<ResourceNotFoundError | NotAllowedError, {}>
 
 export class DeletePhotoUseCase {
   constructor(private photosRepository: PhotosRepository) {}
@@ -17,15 +20,15 @@ export class DeletePhotoUseCase {
     const photo = await this.photosRepository.findById(photoId)
 
     if (!photo) {
-      throw new Error('Photo not found.')
+      return left(new ResourceNotFoundError())
     }
 
     if (authorId !== photo.authorId.toString()) {
-      throw new Error('Not allowed.')
+      return left(new NotAllowedError())
     }
 
     await this.photosRepository.delete(photo)
 
-    return {}
+    return right({})
   }
 }
